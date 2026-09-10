@@ -1,0 +1,30 @@
+{
+  "Comment": "This is the retraining workflow for GovernOps.",
+  "StartAt": "CheckDataDrift",
+  "States": {
+    "CheckDataDrift": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:CheckDataDriftFunction",
+      "Next": "IsDriftDetected"
+    },
+    "IsDriftDetected": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.driftDetected",
+          "BooleanEquals": true,
+          "Next": "TriggerRetraining"
+        }
+      ],
+      "Default": "EndState"
+    },
+    "TriggerRetraining": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:TriggerRetrainingFunction",
+      "Next": "EndState"
+    },
+    "EndState": {
+      "Type": "Succeed"
+    }
+  }
+}

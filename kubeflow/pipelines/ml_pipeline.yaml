@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: governops-
+spec:
+  entrypoint: mlops-pipeline
+  templates:
+  - name: mlops-pipeline
+    steps:
+    - - name: data-preprocessing
+        template: data-preprocessing
+    - - name: model-training
+        template: model-training
+    - - name: model-registration
+        template: model-registration
+    - - name: model-deployment
+        template: model-deployment
+    - - name: model-monitoring
+        template: model-monitoring
+
+  - name: data-preprocessing
+    container:
+      image: your-docker-image
+      command: ["python", "/src/pipeline/training.py", "preprocess_data"]
+
+  - name: model-training
+    container:
+      image: your-docker-image
+      command: ["python", "/src/pipeline/training.py", "train_model"]
+
+  - name: model-registration
+    container:
+      image: your-docker-image
+      command: ["python", "/src/models/model_registry.py", "register_model"]
+
+  - name: model-deployment
+    container:
+      image: your-docker-image
+      command: ["python", "/src/pipeline/deployment.py", "deploy_model"]
+
+  - name: model-monitoring
+    container:
+      image: your-docker-image
+      command: ["python", "/src/pipeline/monitoring.py", "monitor_model"]
