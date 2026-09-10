@@ -1,0 +1,331 @@
+# ============================================================================
+# CI/CD Pipeline for MLOps Platform
+# ============================================================================
+# This file defines an AUTOMATIC workflow that runs when you push code
+# Think of it as: "Recipe for automatic testing and deployment"
+
+name: MLOps CI/CD Pipeline
+
+# ============================================================================
+# WHEN should this run?
+# ============================================================================
+on:
+  push:
+    branches: [ main, master, develop ]
+    # Means: Run this workflow when code is pushed to main/master/develop branch
+    
+  pull_request:
+    branches: [ main, master ]
+    # Means: Also run when someone creates a Pull Request
+    
+  workflow_dispatch:
+    # Means: Also allow manual triggering from GitHub UI (useful for testing)
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+# These are like "global settings" that all jobs can use
+env:
+  PYTHON_VERSION: '3.13'
+  DOCKER_IMAGE_NAME: mlops-platform
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  # Note: secrets.DOCKER_USERNAME is stored securely in GitHub, not in code!
+
+# ============================================================================
+# JOBS: The actual work to do
+# ============================================================================
+jobs:
+  
+  # ==========================================================================
+  # JOB 1: TEST - Check if code works
+  # ==========================================================================
+  test:
+    name: 🧪 Run Tests and Code Quality Checks
+    runs-on: ubuntu-latest
+    # Means: Run this on a fresh Ubuntu Linux server (GitHub provides this for free!)
+    
+    steps:
+      # ----------------------------------------------------------------------
+      # STEP 1.1: Get your code
+      # ----------------------------------------------------------------------
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        # Explanation:
+        # - "actions/checkout@v4" is a pre-built action from GitHub
+        # - It downloads your code from the repository
+        # - Like doing "git clone" automatically
+      
+      # ----------------------------------------------------------------------
+      # STEP 1.2: Install Python
+      # ----------------------------------------------------------------------
+      - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+        # Explanation:
+        # - Installs Python 3.13 on the server
+        # - Like doing "brew install python" but automatic
+      
+      # ----------------------------------------------------------------------
+      # STEP 1.3: Cache Python packages (speeds up future runs)
+      # ----------------------------------------------------------------------
+      - name: 📦 Cache Python Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+        # Explanation:
+        # - Saves installed packages so next run is faster
+        # - Like keeping ingredients ready instead of shopping every time
+        # - If requirements.txt doesn't change, uses cached packages
+      
+      # ----------------------------------------------------------------------
+      # STEP 1.4: Install dependencies
+      # ----------------------------------------------------------------------
+      - name: 📚 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8 black bandit
+        # Explanation:
+        # - Installs all Python packages your project needs
+        # - pytest: For running tests
+        # - pytest-cov: For checking test coverage
+        # - flake8: Checks code quality
+        # - black: Checks code formatting
+        # - bandit: Checks for security issues
+      
+      # ----------------------------------------------------------------------
+      # STEP 1.5: Run code quality checks
+      # ----------------------------------------------------------------------
+      - name: 🔍 Run Code Quality Checks (Flake8)
+        run: |
+          # Check Python code style and quality
+          flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Explanation:
+          # - Checks for syntax errors
+          # - E9: Runtime errors
+          # - F63, F7, F82: Import errors, undefined names
+          # - Like a spell-checker for code
+        continue-on-error: true
+        # Means: Don't stop if this fails, just warn us
+      
+      # ----------------------------------------------------------------------
+      # STEP 1.6: Run security checks
+      # ----------------------------------------------------------------------
+      - name: 🔒 Security Scan (Bandit)
+        run: |
+          # Check for common security issues
+          bandit -r src/ -f json -o bandit-report.json || true
+        # Explanation:
+        # - Scans code for security vulnerabilities
+          # - SQL injection risks
+          # - Hardcoded passwords
+          # - Unsafe functions
+        continue-on-error: true
+      
+      # ----------------------------------------------------------------------
+      # STEP 1.7: Run unit tests
+      # ----------------------------------------------------------------------
+      - name: 🧪 Run Unit Tests
+        run: |
+          # Create necessary directories
+          mkdir -p mlruns models model_cards
+          
+          # Run pytest with coverage
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+        # Explanation:
+        # - pytest tests/: Run all tests in tests folder
+          # - -v: Verbose (show details)
+          # - --cov=src: Check how much of src/ code is tested
+          # - --cov-report: Generate coverage reports
+        # Example output:
+        # test_model_training.py::test_credit_risk ✅ PASSED
+        # test_api.py::test_health_endpoint ✅ PASSED
+        continue-on-error: true
+      
+      # ----------------------------------------------------------------------
+      # STEP 1.8: Upload test results
+      # ----------------------------------------------------------------------
+      - name: 📊 Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        # "if: always()" means: Upload even if tests failed
+        with:
+          name: coverage-reports
+          path: |
+            htmlcov/
+            coverage.xml
+            bandit-report.json
+        # Explanation:
+        # - Saves test results so you can download and view them
+        # - Like saving a report card
+
+  # ==========================================================================
+  # JOB 2: BUILD - Create Docker Image
+  # ==========================================================================
+  build:
+    name: 🐳 Build Docker Image
+    needs: test
+    # "needs: test" means: Only run if TEST job succeeded!
+    # Like: Only bake cake if ingredients are good
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ----------------------------------------------------------------------
+      # STEP 2.1: Get code
+      # ----------------------------------------------------------------------
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      # ----------------------------------------------------------------------
+      # STEP 2.2: Set up Docker Buildx (advanced Docker builder)
+      # ----------------------------------------------------------------------
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        # Explanation:
+        # - Buildx is an improved Docker builder
+        # - Supports multi-platform builds
+        # - Faster builds with caching
+      
+      # ----------------------------------------------------------------------
+      # STEP 2.3: Login to Docker Hub
+      # ----------------------------------------------------------------------
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        # Explanation:
+        # - Logs into Docker Hub so we can push images
+        # - Uses secrets (like passwords) stored in GitHub Settings
+        # - Secrets are encrypted, not visible in code!
+        if: github.event_name != 'pull_request' && env.DOCKER_USERNAME != ''
+        # Only login if NOT a pull request (security), and Docker Hub credentials exist
+      
+      # ----------------------------------------------------------------------
+      # STEP 2.4: Generate Docker tags
+      # ----------------------------------------------------------------------
+      - name: 🏷️ Generate Docker Tags
+        id: meta
+        if: env.DOCKER_USERNAME != ''
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+        # Explanation:
+        # - Automatically creates version tags
+        # - Example tags:
+        #   - latest (for main branch)
+        #   - v2.1.0 (if you tag a release)
+        #   - sha-abc123 (unique commit ID)
+      
+      # ----------------------------------------------------------------------
+      # STEP 2.5: Build and push Docker image
+      # ----------------------------------------------------------------------
+      - name: 🏗️ Build and Push Docker Image
+        if: env.DOCKER_USERNAME != ''
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          # Only push to Docker Hub if NOT a pull request
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # GHA cache = GitHub Actions cache (speeds up builds)
+        # Explanation:
+        # - Builds Docker image from your Dockerfile
+        # - Pushes to Docker Hub if tests passed
+        # - Uses caching to speed up future builds
+        # - Like: Package your app, send to warehouse
+
+  # ==========================================================================
+  # JOB 3: DEPLOY - Deploy to Kubernetes (Optional)
+  # ==========================================================================
+  deploy:
+    name: 🚀 Deploy to Kubernetes
+    needs: build
+    # Only run if BUILD succeeded!
+    
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Only deploy if:
+    # - Pushing to main branch (not develop)
+    # - It's a push (not a pull request)
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      # ----------------------------------------------------------------------
+      # STEP 3.1: Deploy to Kubernetes (placeholder)
+      # ----------------------------------------------------------------------
+      - name: 🚀 Deploy to Kubernetes
+        run: |
+          echo "🎯 Deployment would happen here"
+          echo "In production, this would run:"
+          echo "  kubectl apply -f kubernetes/deployment.yaml"
+          echo "  kubectl rollout status deployment/mlops-api"
+        # Explanation:
+        # - This is a placeholder for now
+        # - In production, would:
+        #   1. Connect to Kubernetes cluster
+        #   2. Apply new deployment with new Docker image
+        #   3. Wait for rollout to complete
+        #   4. Run health checks
+      
+      # ----------------------------------------------------------------------
+      # STEP 3.2: Health Check
+      # ----------------------------------------------------------------------
+      - name: 🏥 Health Check
+        run: |
+          echo "✅ Running health checks..."
+          echo "In production, would check:"
+          echo "  - API responds: curl http://api.example.com/health"
+          echo "  - Database connected: check DB status"
+          echo "  - MLflow accessible: check MLflow UI"
+        # Explanation:
+        # - After deployment, verify everything works
+        # - Like tasting the cake after baking
+
+  # ==========================================================================
+  # JOB 4: NOTIFY - Send Notifications
+  # ==========================================================================
+  notify:
+    name: 📧 Send Notifications
+    needs: [test, build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    # "if: always()" means: Run even if previous jobs failed
+    
+    steps:
+      - name: 📧 Notification
+        run: |
+          echo "================================================"
+          echo "CI/CD PIPELINE COMPLETED"
+          echo "================================================"
+          echo "Status:"
+          echo "  Tests: ${{ needs.test.result }}"
+          echo "  Build: ${{ needs.build.result }}"
+          echo "  Deploy: ${{ needs.deploy.result }}"
+          echo "================================================"
+          echo ""
+          echo "In production, this would send:"
+          echo "  - Email notification"
+          echo "  - Slack message"
+          echo "  - Update GitHub status"
+        # Explanation:
+        # - Shows summary of all jobs
+        # - In production, would send actual notifications
+        # - Email, Slack, Teams, etc.

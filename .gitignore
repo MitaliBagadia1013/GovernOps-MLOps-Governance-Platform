@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables
+.env
+.env.local
+
+# MLflow run artifacts (large binary data)
+mlruns/
+mlflow_artifacts/
+
+# Trained model binaries (large files, regenerate with: python src/pipeline/train_all_models_real.py)
+models/**/*.pkl
+models/**/*.h5
+
+# Drift detection reports (generated at runtime)
+drift_reports/
+
+# Generated pipeline build artifacts
+pipeline_builds/
+
+# Data files (large or proprietary)
+data/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Database
+*.db
+*.sqlite
+
+# Temporary
+*.tmp
+*.bak
+tmp/
+temp/
+
+# pytest
+.pytest_cache/

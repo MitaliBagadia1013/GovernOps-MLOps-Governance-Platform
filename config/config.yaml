@@ -1,0 +1,129 @@
+platform:
+  name: "GovernOps - MLOps Governance Platform"
+  version: "1.0"
+  environment: "production"
+
+model_registry:
+  backend: "s3"
+  s3_bucket: "mlops-model-registry"
+  max_concurrent_models: 10
+  versioning_enabled: true
+  metadata_format: "json"
+
+mlflow:
+  tracking_uri: "http://mlflow-server:5000"
+  experiment_prefix: "mlops"
+  artifact_location: "s3://mlops-artifacts"
+  enable_autolog: true
+
+kubeflow:
+  host: "http://kubeflow-dashboard:8080"
+  namespace: "kubeflow-mlops"
+  pipeline_root: "s3://mlops-pipelines"
+
+drift_detection:
+  method: "kolmogorov_smirnov"
+  ks_threshold: 0.05
+  check_frequency: "hourly"
+  consecutive_drift_count: 3
+  features_to_monitor: "all"
+
+self_healing:
+  enabled: true
+  automatic_retraining: true
+  automatic_rollback: true
+  error_rate_threshold: 0.1
+  latency_threshold_ms: 500
+  min_requests_for_decision: 100
+
+canary_deployment:
+  enabled: true
+  initial_traffic_percent: 5
+  promotion_threshold: 0.02
+  validation_period_minutes: 30
+  auto_promote: false
+  auto_rollback: true
+
+monitoring:
+  metrics_retention_days: 90
+  alert_channels:
+    - "slack"
+    - "email"
+    - "pagerduty"
+  metrics_to_track:
+    - "accuracy"
+    - "latency"
+    - "error_rate"
+    - "throughput"
+    - "drift_score"
+  dashboards:
+    - "grafana"
+    - "cloudwatch"
+
+compliance:
+  bias_detection_enabled: true
+  model_cards_required: true
+  bias_threshold: 0.1
+  sensitive_attributes:
+    - "age"
+    - "gender"
+    - "race"
+    - "location"
+  regulatory_frameworks:
+    - "GDPR"
+    - "CCPA"
+    - "HIPAA"
+
+aws:
+  region: "us-east-1"
+  step_functions:
+    retraining_arn: "arn:aws:states:us-east-1:123456789012:stateMachine:retraining-workflow"
+  sagemaker:
+    role_arn: "arn:aws:iam::123456789012:role/SageMakerExecutionRole"
+    instance_type: "ml.m5.xlarge"
+  s3:
+    data_bucket: "mlops-data"
+    model_bucket: "mlops-models"
+    logs_bucket: "mlops-logs"
+
+seldon:
+  namespace: "seldon-mlops"
+  deployment_type: "kubernetes"
+  replicas: 3
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+logging:
+  level: "INFO"
+  format: "json"
+  outputs:
+    - "console"
+    - "file"
+    - "cloudwatch"
+  log_retention_days: 30
+
+data:
+  reference_data_path: "s3://mlops-data/reference/"
+  production_data_path: "s3://mlops-data/production/"
+  training_data_path: "s3://mlops-data/training/"
+  validation_split: 0.2
+  test_split: 0.1
+
+security:
+  encryption_at_rest: true
+  encryption_in_transit: true
+  enable_rbac: true
+  audit_logging: true
+  secrets_manager: "aws_secrets_manager"
+
+performance:
+  max_batch_size: 1000
+  timeout_seconds: 30
+  max_retries: 3
+  cache_enabled: true
+  cache_ttl_seconds: 3600

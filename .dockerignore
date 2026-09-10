@@ -1,0 +1,135 @@
+# ============================================================================
+# Docker Ignore File
+# ============================================================================
+# This tells Docker which files to IGNORE when building
+# Like a ".gitignore" but for Docker
+# Smaller builds = Faster builds!
+
+# ============================================================================
+# Python
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+# Explanation:
+# - Don't copy compiled Python files
+# - They're generated automatically anyway
+# - Saves space!
+
+# ============================================================================
+# Virtual Environments
+# ============================================================================
+venv/
+env/
+ENV/
+.venv
+# Explanation:
+# - Don't copy virtual environment folders
+# - We install packages fresh in Docker anyway
+# - Virtual envs are huge and unnecessary in container
+
+# ============================================================================
+# IDE and Editor Files
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+# Explanation:
+# - Your VS Code/PyCharm settings
+# - Mac's .DS_Store files
+# - Not needed in container!
+
+# ============================================================================
+# Git
+# ============================================================================
+.git/
+.gitignore
+.gitattributes
+# Explanation:
+# - Git history not needed in container
+# - Only need the actual code files
+
+# ============================================================================
+# Testing
+# ============================================================================
+.pytest_cache/
+.coverage
+htmlcov/
+*.coverage
+.tox/
+# Explanation:
+# - Test results and coverage reports
+# - Will be generated fresh when running tests
+
+# ============================================================================
+# Documentation
+# ============================================================================
+*.md
+docs/
+# Explanation:
+# - Documentation files (README, guides)
+# - Not needed for running the app
+# - Reduces image size
+
+# ============================================================================
+# MLflow and Data
+# ============================================================================
+mlruns/
+mlflow_artifacts/
+*.csv
+*.pkl
+*.h5
+*.joblib
+# Explanation:
+# - Old experiment data
+# - Trained models (we'll train fresh)
+# - Data files (use volume mounts instead)
+
+# ============================================================================
+# Logs
+# ============================================================================
+*.log
+logs/
+# Explanation:
+# - Old log files
+# - Fresh start for each container
+
+# ============================================================================
+# CI/CD
+# ============================================================================
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+# Explanation:
+# - CI/CD configuration files
+# - Only needed by GitHub/GitLab, not in container
+
+# ============================================================================
+# Docker
+# ============================================================================
+Dockerfile
+docker-compose.yml
+.dockerignore
+# Explanation:
+# - Don't copy Docker files into the image
+# - Inception avoided! 😄
+
+# ============================================================================
+# Node (if any)
+# ============================================================================
+node_modules/
+npm-debug.log
+# Explanation:
+# - If you have any JavaScript dependencies
+# - They're huge and unnecessary
+
+# Keep only what's needed:
+# - Source code (src/)
+# - Requirements (requirements.txt)
+# - Config files (config/)
+# Everything else = ignored!
