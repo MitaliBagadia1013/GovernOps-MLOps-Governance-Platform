@@ -1,0 +1,40 @@
+{
+    "model_name": "demand_forecasting",
+    "version": "1.0.0",
+    "author": "GovernOps - Real Data Pipeline",
+    "description": "Production Ridge model trained on REAL public dataset: diabetes",
+    "metrics": {},
+    "performance_metrics": {
+        "rmse": 55.47446204180109,
+        "mae": 46.13885766697452,
+        "r2_score": 0.41915292635986545
+    },
+    "bias_report": {},
+    "training_data_info": {
+        "name": "diabetes",
+        "size": 442,
+        "source": "sklearn diabetes dataset",
+        "description": "Real patient data - regression proxy for demand forecasting",
+        "features": [
+            "age",
+            "sex",
+            "bmi",
+            "bp",
+            "s1",
+            "s2",
+            "s3",
+            "s4",
+            "s5",
+            "s6"
+        ]
+    },
+    "hyperparameters": {
+        "algorithm": "Ridge",
+        "framework": "scikit-learn"
+    },
+    "deployment_info": {
+        "target_environment": "production",
+        "serving_framework": "FastAPI"
+    },
+    "created_at": "2026-09-10T06:46:45.511287"
+}

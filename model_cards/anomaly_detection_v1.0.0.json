@@ -1,0 +1,35 @@
+{
+    "model_name": "anomaly_detection",
+    "version": "1.0.0",
+    "author": "GovernOps - Real Data Pipeline",
+    "description": "Production IsolationForest model trained on REAL public dataset: breast_cancer_anomaly",
+    "metrics": {},
+    "performance_metrics": {
+        "anomaly_rate": 0.10017574692442882,
+        "n_anomalies": 57,
+        "n_normal": 512
+    },
+    "bias_report": {},
+    "training_data_info": {
+        "name": "breast_cancer_anomaly",
+        "size": 569,
+        "source": "UCI ML Repository (sklearn.datasets.load_breast_cancer)",
+        "description": "Real diagnostic data for outlier detection",
+        "features": [
+            "mean radius",
+            "mean texture",
+            "mean perimeter",
+            "mean area",
+            "mean smoothness"
+        ]
+    },
+    "hyperparameters": {
+        "algorithm": "IsolationForest",
+        "framework": "scikit-learn"
+    },
+    "deployment_info": {
+        "target_environment": "production",
+        "serving_framework": "FastAPI"
+    },
+    "created_at": "2026-09-10T06:46:23.089479"
+}

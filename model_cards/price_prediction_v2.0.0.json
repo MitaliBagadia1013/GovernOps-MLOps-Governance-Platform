@@ -1,0 +1,38 @@
+{
+    "model_name": "price_prediction",
+    "version": "2.0.0",
+    "author": "GovernOps - Real Data Pipeline",
+    "description": "Production GradientBoostingRegressor model trained on REAL public dataset: california_housing",
+    "metrics": {},
+    "performance_metrics": {
+        "rmse": 49654.809697534176,
+        "mae": 33437.169960729545,
+        "r2_score": 0.8118449913699333
+    },
+    "bias_report": {},
+    "training_data_info": {
+        "name": "california_housing",
+        "size": 20640,
+        "source": "1990 US Census (sklearn.datasets.fetch_california_housing)",
+        "description": "Real housing prices from California districts",
+        "features": [
+            "MedInc",
+            "HouseAge",
+            "AveRooms",
+            "AveBedrms",
+            "Population",
+            "AveOccup",
+            "Latitude",
+            "Longitude"
+        ]
+    },
+    "hyperparameters": {
+        "algorithm": "GradientBoostingRegressor",
+        "framework": "scikit-learn"
+    },
+    "deployment_info": {
+        "target_environment": "production",
+        "serving_framework": "FastAPI"
+    },
+    "created_at": "2026-04-29T15:28:40.095027"
+}

@@ -1,0 +1,30 @@
+{
+    "model_name": "recommendation",
+    "version": "3.1.0",
+    "author": "GovernOps - Real Data Pipeline",
+    "description": "Production KNearestNeighbors model trained on REAL public dataset: digits_recommendation",
+    "metrics": {},
+    "performance_metrics": {
+        "n_items": 1797,
+        "n_neighbors": 10,
+        "avg_neighbor_distance": 0.05236082540650939
+    },
+    "bias_report": {},
+    "training_data_info": {
+        "name": "digits_recommendation",
+        "size": 1797,
+        "source": "UCI ML Repository (sklearn.datasets.load_digits)",
+        "description": "Real digit images for similarity-based recommendation",
+        "image_size": "8x8 pixels",
+        "distance_metric": "cosine"
+    },
+    "hyperparameters": {
+        "algorithm": "KNearestNeighbors",
+        "framework": "scikit-learn"
+    },
+    "deployment_info": {
+        "target_environment": "production",
+        "serving_framework": "FastAPI"
+    },
+    "created_at": "2026-09-10T06:46:51.013598"
+}
