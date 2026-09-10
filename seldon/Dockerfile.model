@@ -1,0 +1,53 @@
+# ============================================================================
+# Seldon Model Server Dockerfile
+# ============================================================================
+# Creates a container that serves the credit_risk model via Seldon Core
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir seldon-core==1.17.1
+
+# Copy model server code
+COPY seldon/model_server.py /app/model_server.py
+
+# Create directory for model artifacts
+RUN mkdir -p /models/credit_risk/v2.0.0
+
+# Copy model artifacts
+# (In production, these would be loaded from S3/GCS/Azure Blob)
+COPY models/credit_risk/v2.0.0/ /models/credit_risk/v2.0.0/
+
+# Set environment variables
+ENV MODEL_NAME=credit_risk
+ENV MODEL_VERSION=2.0.0
+ENV PREDICTIVE_UNIT_PARAMETERS='[{"name":"model_name","value":"credit_risk","type":"STRING"}]'
+
+# Expose port for Seldon
+EXPOSE 9000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:9000/health/ping || exit 1
+
+# Run as non-root user
+RUN useradd -m -u 1000 seldon && chown -R seldon:seldon /app /models
+USER seldon
+
+# Start Seldon model server
+# Seldon will call model_server.CreditRiskModel
+CMD exec seldon-core-microservice model_server.CreditRiskModel \
+    --service-type MODEL \
+    --log-level INFO

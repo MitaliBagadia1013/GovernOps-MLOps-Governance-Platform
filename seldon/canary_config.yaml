@@ -1,0 +1,31 @@
+traffic:
+  canary: 0.05
+  baseline: 0.95
+
+model:
+  name: your_model_name
+  version: your_model_version
+
+predictors:
+  - name: your_model_name
+    replicas: 1
+    graph:
+      children: []
+      name: your_model_name
+      endpoint:
+        type: REST
+    service:
+      type: ClusterIP
+
+routing:
+  rules:
+    - match:
+        - key: "version"
+          operator: In
+          values: ["canary"]
+      route: "canary"
+    - match:
+        - key: "version"
+          operator: In
+          values: ["baseline"]
+      route: "baseline"
